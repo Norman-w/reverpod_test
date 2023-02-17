@@ -57,10 +57,12 @@ ChangeNotifierProvider<StateController>((ref) => StateController());
 // }
 //endregion
 
-class ViewState{
-  int count = 1;
-}
+// class ViewState{
+//   int count = 1;
+// }
 
+
+//region 有状态组件
 class RView extends ConsumerStatefulWidget {
   const RView({super.key, required this.title});
 
@@ -92,7 +94,9 @@ class _RControllerState extends ConsumerState<RController> {
   int selfCount = 0;
 
   void _incrementCounter() {
-    ref.read(stateControllerProvider).count++;
+    var viewState = ref.read(stateControllerProvider);
+    viewState.count += 5;
+    // ref.read(stateControllerProvider).count++;
     setState(() {
       selfCount += 2;
     });
@@ -114,8 +118,8 @@ class _RControllerState extends ConsumerState<RController> {
     );
   }
 }
-
-
+//endregion
+//region 无状态组件
 class RStatelessView extends ConsumerWidget {
   const RStatelessView({super.key});
   @override
@@ -137,3 +141,4 @@ class RStatelessController extends ConsumerWidget {
     );
   }
 }
+//endregion
