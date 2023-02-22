@@ -26,9 +26,8 @@ class MyApp extends StatelessWidget {
       Scaffold(
         body:
         Column(
-          children: [
+          children: const [
             TodoListShower(),
-
           ],
         )
         ,
@@ -240,32 +239,18 @@ class TaskWidget extends ConsumerWidget {
         },
         child: // widget的child部分
       ElevatedButton(onPressed: (){
-        print('点击了任务:${taskNotifier.name} 当前状态:${isFinished}');
+        print('点击了任务:${taskNotifier.name} 当前状态:$isFinished');
         ref.read(taskProvider(task).notifier).setFinished(!isFinished);
       },child: Text(taskNotifier.name),)
     );
   }
 }
 
-
-class TodoStateController extends StateNotifier<TodoState>{
-  TodoStateController(super.state);
-  add(){
-    state = TodoState()..count  =  state.count +1;
-  }
-}
-
-Widget getTaskWidget(Task task){
-  return Container(
-    decoration: BoxDecoration(color: task.color),
-    child: Text(task.name),
-  );
-}
-
-StateNotifierProvider<TodoStateController, TodoState> todoStateProvider
-= StateNotifierProvider((ref) => TodoStateController(TodoState()));
+var todoState = TodoState();
 
 class TodoListShower extends ConsumerStatefulWidget{
+  const TodoListShower({super.key});
+
   @override
   ConsumerState<ConsumerStatefulWidget> createState() {
     return _TodoListShowerState();
@@ -276,19 +261,12 @@ class _TodoListShowerState extends ConsumerState<TodoListShower> {
   Widget build(BuildContext context) {
     return Center(child:Column(
       children: [
-        ...ref
-            .watch(todoStateProvider)
-            .things
+        ...todoState.things
             .map((e) {
           // return getTaskWidget(e);
           return TaskWidget(task:e, key : Key(e.name));
         }
         ),
-        Text('当前count:${ref.watch(todoStateProvider).count}'),
-// 要测试的是随便改一个list里面的task 不会刷新其他东西  明天用随机色看看 就知道了.
-        ElevatedButton(onPressed: (){
-          ref.read(todoStateProvider.notifier).add();
-        }, child: Text('点击'))
       ],
     ));
   }
