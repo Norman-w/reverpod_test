@@ -15,19 +15,12 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home:
-        // Column(
-        //   children: const [
-        //     RView(title: "RiverPodTest"),
-        //     RController(),
-        //     RStatelessView(),
-        //     RStatelessController(),
-        //   ],
-        // )
       Scaffold(
         body:
         Column(
           children: const [
-            TodoListShower(),
+            // TaskListShower(),
+            TodoShower(),
           ],
         )
         ,
@@ -52,11 +45,20 @@ class Task{
   }
 }
 class TodoState{
+  TodoState();
   double count = 0;
-  List<Task> things = [
-    Task("第一件事儿", Colors.blue),
-    Task("第2件事儿", Colors.green),
+  List<Task> things =
+  // [];
+  [
+  Task("第一件事儿", Colors.blue),
+  Task("第2件事儿", Colors.green),
   ];
+  TodoState copyWith({double? count, List<Task>? things}){
+    return TodoState()
+      ..count = count ?? this.count
+      ..things = things ?? this.things
+    ;
+  }
 }
 
 class TaskController extends StateNotifier<Task> {
@@ -74,7 +76,7 @@ class TaskController extends StateNotifier<Task> {
   }
 }
 
-final taskProvider =
+final tasksProvider =
 StateNotifierProvider.family<TaskController, Task, dynamic>(
         (ref, task) => TaskController(task, false));
 
@@ -88,7 +90,7 @@ class TaskWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
 
-    final taskNotifier = ref.watch(taskProvider(task));
+    final taskNotifier = ref.watch(tasksProvider(task));
     final isFinished = taskNotifier.isFinished;
     print('build了task组件:${taskNotifier.name}');
     // 构建widget，并根据isSelected设置样式
@@ -101,35 +103,60 @@ class TaskWidget extends ConsumerWidget {
         child: // widget的child部分
       ElevatedButton(onPressed: (){
         print('点击了任务:${taskNotifier.name} 当前状态:$isFinished');
-        ref.read(taskProvider(task).notifier).setFinished(!isFinished);
+        ref.read(tasksProvider(task).notifier).setFinished(!isFinished);
       },child: Text(taskNotifier.name),)
     );
   }
 }
-
-var todoState = TodoState();
-
-class TodoListShower extends ConsumerStatefulWidget{
-  const TodoListShower({super.key});
-
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() {
-    return _TodoListShowerState();
-  }
-}
-class _TodoListShowerState extends ConsumerState<TodoListShower> {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child:Column(
-      children: [
-        ...todoState.things
-            .map((e) {
-          // return getTaskWidget(e);
-          return TaskWidget(task:e, key : Key(e.name));
-        }
-        ),
-      ],
-    ));
-  }
-}
 //endregion
+
+class TodoStateNotifier extends StateNotifier<TodoState> {
+  TodoStateNotifier() : super(TodoState());
+
+  void addTask(Task task) {
+    state = state.copyWith(
+      things: [...state.things, task],
+    );
+  }
+  void insertTask(Task task, int index) {
+    List<Task> newThings = [...state.things];
+    newThings.insert(index, task);
+    state = state.copyWith(things: newThings);
+  }
+}
+
+final todoStateProvider = StateNotifierProvider<TodoStateNotifier, TodoState>(
+        (ref) => TodoStateNotifier());
+
+
+class TodoShower extends ConsumerWidget {
+  const TodoShower({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+     final todoState = ref.watch(todoStateProvider);
+      return Center(
+        child: Column(
+          children: [
+            ...todoState.things
+                .map((e) {
+              // return getTaskWidget(e);
+              return TaskWidget(task:e, key : Key(e.name));
+            }
+            ),
+
+
+            //添加记录的按钮
+            ElevatedButton(onPressed: (){
+              ref.read(todoStateProvider.notifier).addTask(Task("第${todoState.things.length+1}件事儿", Colors.blue));
+            },child: const Text("添加任务"),),
+
+            //插入记录的按钮,记录的name使用随机数
+            ElevatedButton(onPressed: (){
+              ref.read(todoStateProvider.notifier).insertTask(Task("第${todoState.things.length+1}件事儿", Colors.blue), 1);
+            },child: const Text("插入任务"),),
+          ],
+        ),
+      );
+  }
+}
